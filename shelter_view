@@ -1,4 +1,3 @@
-<!-- admin.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,6 +8,7 @@
     .shelter { border: 1px solid #ccc; padding: 15px; margin-bottom: 10px; }
     .name { font-size: 1.2em; font-weight: bold; }
     button { margin: 2px; }
+    input[type="number"] { width: 60px; }
   </style>
 </head>
 <body>
@@ -31,6 +31,20 @@
       renderShelters();
     }
 
+    function updateTotalBeds(id) {
+      const input = document.getElementById(`beds-input-${id}`);
+      const newValue = parseInt(input.value);
+      const shelter = shelters.find(s => s.id === id);
+
+      if (!isNaN(newValue) && newValue >= shelter.occupiedBeds) {
+        shelter.totalBeds = newValue;
+      } else {
+        alert("Total beds must be a number and ≥ occupied beds.");
+        input.value = shelter.totalBeds; // reset to old value
+      }
+      renderShelters();
+    }
+
     function renderShelters() {
       const container = document.getElementById('shelters');
       container.innerHTML = '';
@@ -41,7 +55,11 @@
         div.innerHTML = `
           <div class="name">${s.name}</div>
           <div>Address: ${s.address}</div>
-          <div>Total Beds: ${s.totalBeds}</div>
+          <div>
+            Total Beds:
+            <input type="number" id="beds-input-${s.id}" value="${s.totalBeds}" min="${s.occupiedBeds}">
+            <button onclick="updateTotalBeds(${s.id})">Update</button>
+          </div>
           <div>Occupied Beds: ${s.occupiedBeds}</div>
           <div>Available Beds: <strong>${available}</strong></div>
           <button onclick="updateBeds(${s.id}, 'in')">⬆ Check In</button>
