@@ -1,0 +1,57 @@
+<!-- admin.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Shelter Admin</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    .shelter { border: 1px solid #ccc; padding: 15px; margin-bottom: 10px; }
+    .name { font-size: 1.2em; font-weight: bold; }
+    button { margin: 2px; }
+  </style>
+</head>
+<body>
+  <h1>Shelter Staff Panel</h1>
+  <div id="shelters"></div>
+
+  <script>
+    const shelters = [
+      { id: 1, name: "Safe Haven", address: "123 Hope St", totalBeds: 20, occupiedBeds: 5 },
+      { id: 2, name: "Helping Hands", address: "456 Care Ave", totalBeds: 15, occupiedBeds: 10 }
+    ];
+
+    function updateBeds(id, direction) {
+      const shelter = shelters.find(s => s.id === id);
+      if (direction === 'in' && shelter.occupiedBeds < shelter.totalBeds) {
+        shelter.occupiedBeds++;
+      } else if (direction === 'out' && shelter.occupiedBeds > 0) {
+        shelter.occupiedBeds--;
+      }
+      renderShelters();
+    }
+
+    function renderShelters() {
+      const container = document.getElementById('shelters');
+      container.innerHTML = '';
+      shelters.forEach(s => {
+        const available = s.totalBeds - s.occupiedBeds;
+        const div = document.createElement('div');
+        div.className = 'shelter';
+        div.innerHTML = `
+          <div class="name">${s.name}</div>
+          <div>Address: ${s.address}</div>
+          <div>Total Beds: ${s.totalBeds}</div>
+          <div>Occupied Beds: ${s.occupiedBeds}</div>
+          <div>Available Beds: <strong>${available}</strong></div>
+          <button onclick="updateBeds(${s.id}, 'in')">⬆ Check In</button>
+          <button onclick="updateBeds(${s.id}, 'out')">⬇ Check Out</button>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    renderShelters();
+  </script>
+</body>
+</html>
