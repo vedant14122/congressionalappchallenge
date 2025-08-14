@@ -1,0 +1,21 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Allow read access to shelters collection for public users
+    match /shelters/{document} {
+      allow read: if true;  // Public read access
+      allow write: if false; // No direct writes from client
+    }
+    
+    // Allow admin operations only through server-side API
+    match /shelters/{document} {
+      allow read, write: if request.auth != null && 
+        request.auth.token.admin == true;
+    }
+    
+    // Deny all other access
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

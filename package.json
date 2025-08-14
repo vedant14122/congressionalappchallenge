@@ -1,0 +1,32 @@
+{
+  "name": "winter-shelter-finder",
+  "version": "1.0.0",
+  "description": "A comprehensive web application for finding and managing winter shelters",
+  "main": "server/server.js",
+  "scripts": {
+    "start": "node server/server.js",
+    "dev": "nodemon server/server.js",
+    "etl": "node scripts/etl_winter.mjs",
+    "etl:clear": "node scripts/etl_winter.mjs --clear"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.1",
+    "firebase-admin": "^13.4.0",
+    "node-fetch": "^3.3.2",
+    "express": "^4.18.2",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  },
+  "keywords": [
+    "shelter",
+    "homelessness",
+    "winter",
+    "congressional-app-challenge",
+    "firebase",
+    "express"
+  ],
+  "author": "Congressional App Challenge Team",
+  "license": "MIT"
+}

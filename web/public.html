@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Winter Shelter Finder</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .search-section {
+            padding: 30px;
+            background: #f8f9fa;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .search-btn {
+            padding: 15px 30px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .search-btn:hover {
+            background: #5a6fd8;
+        }
+
+        .filters {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 10px 20px;
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .filter-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .shelters-grid {
+            padding: 30px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 25px;
+        }
+
+        .shelter-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .shelter-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+        }
+
+        .shelter-name {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .shelter-address {
+            color: #7f8c8d;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .shelter-details {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+
+        .detail-item {
+            text-align: center;
+        }
+
+        .detail-label {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            margin-bottom: 5px;
+        }
+
+        .detail-value {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+
+        .status-open {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-closed {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #7f8c8d;
+        }
+
+        .error {
+            text-align: center;
+            padding: 50px;
+            color: #e74c3c;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Winter Shelter Finder</h1>
+            <p>Find available shelters and resources in your area</p>
+        </div>
+
+        <div class="search-section">
+            <div class="search-box">
+                <input type="text" class="search-input" placeholder="Enter your location or zip code..." id="locationInput">
+                <button class="search-btn" onclick="searchShelters()">Search</button>
+            </div>
+            
+            <div class="filters">
+                <button class="filter-btn active" onclick="filterShelters('all')">All Shelters</button>
+                <button class="filter-btn" onclick="filterShelters('open')">Open Now</button>
+                <button class="filter-btn" onclick="filterShelters('women')">Women Only</button>
+                <button class="filter-btn" onclick="filterShelters('families')">Families</button>
+                <button class="filter-btn" onclick="filterShelters('veterans')">Veterans</button>
+            </div>
+        </div>
+
+        <div id="sheltersContainer" class="shelters-grid">
+            <div class="loading">Loading shelters...</div>
+        </div>
+    </div>
+
+    <script>
+        let allShelters = [];
+        let currentFilter = 'all';
+
+        // Load shelters on page load
+        document.addEventListener('DOMContentLoaded', loadShelters);
+
+        async function loadShelters() {
+            try {
+                const response = await fetch('/api/shelters');
+                const shelters = await response.json();
+                allShelters = shelters;
+                displayShelters(shelters);
+            } catch (error) {
+                console.error('Error loading shelters:', error);
+                document.getElementById('sheltersContainer').innerHTML = 
+                    '<div class="error">Failed to load shelters. Please try again later.</div>';
+            }
+        }
+
+        function displayShelters(shelters) {
+            const container = document.getElementById('sheltersContainer');
+            
+            if (shelters.length === 0) {
+                container.innerHTML = '<div class="loading">No shelters found in this area.</div>';
+                return;
+            }
+
+            container.innerHTML = shelters.map(shelter => `
+                <div class="shelter-card">
+                    <div class="shelter-name">${shelter.name || 'Shelter'}</div>
+                    <div class="shelter-address">${shelter.address || 'Address not available'}</div>
+                    
+                    <div class="shelter-details">
+                        <div class="detail-item">
+                            <div class="detail-label">Capacity</div>
+                            <div class="detail-value">${shelter.capacity || 'N/A'}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Available</div>
+                            <div class="detail-value">${shelter.available || 'N/A'}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Type</div>
+                            <div class="detail-value">${shelter.type || 'General'}</div>
+                        </div>
+                    </div>
+                    
+                    <div style="text-align: center;">
+                        <span class="status-badge ${shelter.status === 'open' ? 'status-open' : 'status-closed'}">
+                            ${shelter.status === 'open' ? 'Open' : 'Closed'}
+                        </span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function searchShelters() {
+            const location = document.getElementById('locationInput').value.toLowerCase();
+            const filtered = allShelters.filter(shelter => 
+                shelter.name?.toLowerCase().includes(location) ||
+                shelter.address?.toLowerCase().includes(location)
+            );
+            displayShelters(filtered);
+        }
+
+        function filterShelters(filter) {
+            currentFilter = filter;
+            
+            // Update active filter button
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            let filtered = allShelters;
+            
+            switch(filter) {
+                case 'open':
+                    filtered = allShelters.filter(shelter => shelter.status === 'open');
+                    break;
+                case 'women':
+                    filtered = allShelters.filter(shelter => 
+                        shelter.type?.toLowerCase().includes('women') ||
+                        shelter.name?.toLowerCase().includes('women')
+                    );
+                    break;
+                case 'families':
+                    filtered = allShelters.filter(shelter => 
+                        shelter.type?.toLowerCase().includes('family') ||
+                        shelter.name?.toLowerCase().includes('family')
+                    );
+                    break;
+                case 'veterans':
+                    filtered = allShelters.filter(shelter => 
+                        shelter.type?.toLowerCase().includes('veteran') ||
+                        shelter.name?.toLowerCase().includes('veteran')
+                    );
+                    break;
+            }
+            
+            displayShelters(filtered);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,92 @@
+[
+  {
+    "name": "Downtown Winter Shelter",
+    "address": "123 Main Street, Downtown",
+    "phone": "(555) 123-4567",
+    "capacity": 50,
+    "available": 15,
+    "type": "general",
+    "status": "open",
+    "coordinates": {
+      "latitude": 40.7128,
+      "longitude": -74.0060
+    },
+    "hours": "7:00 PM - 7:00 AM",
+    "restrictions": "No pets, No weapons",
+    "services": ["Meals", "Showers", "Medical Care"],
+    "lastUpdated": "2024-01-15T10:30:00.000Z",
+    "source": "arcgis_import"
+  },
+  {
+    "name": "Women's Safe Haven",
+    "address": "456 Oak Avenue, Midtown",
+    "phone": "(555) 234-5678",
+    "capacity": 30,
+    "available": 8,
+    "type": "women",
+    "status": "open",
+    "coordinates": {
+      "latitude": 40.7589,
+      "longitude": -73.9851
+    },
+    "hours": "24/7",
+    "restrictions": "Women and children only",
+    "services": ["Counseling", "Childcare", "Job Training"],
+    "lastUpdated": "2024-01-15T10:30:00.000Z",
+    "source": "arcgis_import"
+  },
+  {
+    "name": "Family Emergency Shelter",
+    "address": "789 Pine Street, Uptown",
+    "phone": "(555) 345-6789",
+    "capacity": 25,
+    "available": 12,
+    "type": "families",
+    "status": "open",
+    "coordinates": {
+      "latitude": 40.7505,
+      "longitude": -73.9934
+    },
+    "hours": "6:00 PM - 8:00 AM",
+    "restrictions": "Families with children only",
+    "services": ["Family Counseling", "Education Support", "Housing Assistance"],
+    "lastUpdated": "2024-01-15T10:30:00.000Z",
+    "source": "arcgis_import"
+  },
+  {
+    "name": "Veterans Support Center",
+    "address": "321 Elm Street, Veterans District",
+    "phone": "(555) 456-7890",
+    "capacity": 40,
+    "available": 20,
+    "type": "veterans",
+    "status": "open",
+    "coordinates": {
+      "latitude": 40.7614,
+      "longitude": -73.9776
+    },
+    "hours": "24/7",
+    "restrictions": "Veterans and their families",
+    "services": ["VA Benefits Assistance", "Mental Health Support", "Job Placement"],
+    "lastUpdated": "2024-01-15T10:30:00.000Z",
+    "source": "arcgis_import"
+  },
+  {
+    "name": "Youth Emergency Shelter",
+    "address": "654 Maple Drive, Youth Zone",
+    "phone": "(555) 567-8901",
+    "capacity": 20,
+    "available": 5,
+    "type": "youth",
+    "status": "open",
+    "coordinates": {
+      "latitude": 40.7829,
+      "longitude": -73.9654
+    },
+    "hours": "24/7",
+    "restrictions": "Ages 18-24 only",
+    "services": ["Education Support", "Life Skills Training", "Mental Health"],
+    "lastUpdated": "2024-01-15T10:30:00.000Z",
+    "source": "arcgis_import"
+  }
+]
