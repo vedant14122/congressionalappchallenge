@@ -7,14 +7,16 @@
     "start": "node server/server.js",
     "dev": "nodemon server/server.js",
     "etl": "node scripts/etl_winter.mjs",
-    "etl:clear": "node scripts/etl_winter.mjs --clear"
+    "etl:clear": "node scripts/etl_winter.mjs --clear",
+    "etl:winter": "node scripts/etl_winter.mjs",
+    "etl:test": "node scripts/test_etl.mjs"
   },
   "dependencies": {
+    "cors": "^2.8.5",
     "dotenv": "^17.2.1",
-    "firebase-admin": "^13.4.0",
-    "node-fetch": "^3.3.2",
     "express": "^4.18.2",
-    "cors": "^2.8.5"
+    "firebase-admin": "^13.4.0",
+    "node-fetch": "^3.3.2"
   },
   "devDependencies": {
     "nodemon": "^3.0.2"

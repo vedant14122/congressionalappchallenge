@@ -157,32 +157,54 @@ async function clearExistingData() {
 }
 
 /**
+ * Load data from local JSON file
+ * @param {string} filePath - Path to JSON file
+ * @returns {Promise<Array>} - Array of shelter objects
+ */
+async function loadFromLocalFile(filePath) {
+  try {
+    console.log(`Loading data from local file: ${filePath}`);
+    const data = await fs.readFile(filePath, 'utf8');
+    const shelters = JSON.parse(data);
+    console.log(`Loaded ${shelters.length} shelters from local file`);
+    return shelters;
+  } catch (error) {
+    console.error('Error loading from local file:', error);
+    throw error;
+  }
+}
+
+/**
  * Main ETL function
  */
 async function runETL() {
   const arcgisUrl = process.env.ARCGIS_SHELTERS_URL;
-  
-  if (!arcgisUrl) {
-    console.error('ARCGIS_SHELTERS_URL environment variable is required');
-    process.exit(1);
-  }
+  const useLocalFile = process.argv.includes('--local') || !arcgisUrl || arcgisUrl.includes('example.com');
   
   try {
     console.log('Starting ETL process...');
     
-    // Fetch data from ArcGIS
-    const features = await fetchArcGISData(arcgisUrl);
+    let shelters;
     
-    // Transform features to shelter objects
-    console.log('Transforming data...');
-    const shelters = features.map(transformFeature);
+    if (useLocalFile) {
+      // Load from local JSON file
+      const localDataPath = path.join(process.cwd(), 'data', 'winter_shelters.json');
+      shelters = await loadFromLocalFile(localDataPath);
+    } else {
+      // Fetch data from ArcGIS
+      const features = await fetchArcGISData(arcgisUrl);
+      
+      // Transform features to shelter objects
+      console.log('Transforming data...');
+      shelters = features.map(transformFeature);
+    }
     
     // Filter out invalid shelters
     const validShelters = shelters.filter(shelter => 
       shelter.name && shelter.name !== 'Unknown Shelter'
     );
     
-    console.log(`Transformed ${validShelters.length} valid shelters`);
+    console.log(`Processing ${validShelters.length} valid shelters`);
     
     // Save to local file for testing
     await saveToLocalFile(validShelters);
@@ -212,8 +234,7 @@ function validateEnvironment() {
   const required = [
     'FIREBASE_PROJECT_ID',
     'FIREBASE_PRIVATE_KEY',
-    'FIREBASE_CLIENT_EMAIL',
-    'ARCGIS_SHELTERS_URL'
+    'FIREBASE_CLIENT_EMAIL'
   ];
   
   const missing = required.filter(key => !process.env[key]);
@@ -222,6 +243,11 @@ function validateEnvironment() {
     console.error('Missing required environment variables:', missing.join(', '));
     console.error('Please check your .env file');
     process.exit(1);
+  }
+  
+  // Warn if ArcGIS URL is not set (but don't fail)
+  if (!process.env.ARCGIS_SHELTERS_URL) {
+    console.log('ARCGIS_SHELTERS_URL not set, will use local JSON file');
   }
 }
 
