@@ -1,34 +1,45 @@
 {
-  "name": "winter-shelter-finder",
-  "version": "1.0.0",
-  "description": "A comprehensive web application for finding and managing winter shelters",
-  "main": "server/server.js",
+  "name": "congressionalappchallenge",
+  "version": "2.0.0",
+  "description": "LA County shelter and resource finder - helping people find essential services (Congressional App Challenge)",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
-    "start": "node server/server.js",
-    "dev": "nodemon server/server.js",
-    "etl": "node scripts/etl_winter.mjs",
-    "etl:clear": "node scripts/etl_winter.mjs --clear",
-    "etl:winter": "node scripts/etl_winter.mjs",
-    "etl:test": "node scripts/test_etl.mjs"
-  },
-  "dependencies": {
-    "cors": "^2.8.5",
-    "dotenv": "^17.2.1",
-    "express": "^4.18.2",
-    "firebase-admin": "^13.4.0",
-    "node-fetch": "^3.3.2"
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "format": "turbo run format",
+    "type-check": "turbo run type-check",
+    "test": "turbo run test",
+    "clean": "turbo run clean",
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down",
+    "db:migrate": "cd apps/api && poetry run alembic upgrade head",
+    "db:seed": "cd apps/api && poetry run python scripts/seed_data.py",
+    "setup": "pnpm install && pnpm db:up && pnpm db:migrate && pnpm db:seed"
   },
   "devDependencies": {
-    "nodemon": "^3.0.2"
+    "@turbo/gen": "^1.12.4",
+    "turbo": "^1.12.4",
+    "prettier": "^3.1.1",
+    "husky": "^8.0.3",
+    "lint-staged": "^15.2.0"
   },
-  "keywords": [
-    "shelter",
-    "homelessness",
-    "winter",
-    "congressional-app-challenge",
-    "firebase",
-    "express"
-  ],
-  "author": "Congressional App Challenge Team",
-  "license": "MIT"
+  "packageManager": "pnpm@8.15.0",
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,yml,yaml}": [
+      "prettier --write"
+    ]
+  }
 }

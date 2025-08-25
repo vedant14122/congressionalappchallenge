@@ -1,201 +1,316 @@
-# Winter Shelter Finder
+# Congressional App Challenge - ShelterLink 🏠
 
-A comprehensive web application for finding and managing winter shelters, built for the Congressional App Challenge.
+**LA County shelter and resource finder - helping people find essential services**
 
-## 🏗️ Project Structure
+> **Evolution**: This project started as a simple shelter finder and has evolved into a comprehensive platform with mobile app, staff portal, and advanced features.
 
-```
-congressionalappchallenge/
-├─ .env                          # secrets & config (local)
-├─ package.json
-├─ server/
-│  └─ server.js                  # Express API (GET/POST)
-├─ web/
-│  ├─ public.html                # public resource finder
-│  └─ admin.html                 # shelter staff panel
-├─ scripts/
-│  └─ etl_winter.mjs             # ArcGIS -> Firestore ETL
-├─ firestore.rules               # lock down direct writes
-├─ data/
-│  └─ winter_shelters.json       # optional local dump for testing
-└─ README.md
-```
+ShelterLink is a comprehensive platform designed to help people in Los Angeles County quickly find shelters and essential resources. Built with privacy-first principles, multilingual support, and offline capabilities.
+
+## 📁 Legacy Files
+
+The following files are preserved from the original project:
+- `hobo_view` - Original shelter view implementation
+- `shelter_view` - Original shelter management view
+- `web/public.html` - Original public interface
+- `web/admin.html` - Original admin panel
+- `server/server.js` - Original Express.js backend
+
+## 🏗️ Architecture
+
+- **`apps/api`** - FastAPI (Python) backend with Postgres + PostGIS
+- **`apps/staff`** - Next.js 14 web portal for shelter staff
+- **`apps/mobile`** - React Native (Expo) mobile app for end users
+- **`packages/ui`** - Shared UI components for React Native and Next.js
+- **`packages/config`** - Shared ESLint, TypeScript, and Prettier configs
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 
-- Node.js (v16 or higher)
-- Firebase project with Firestore enabled
-- ArcGIS API access (optional, for data import)
+- Node.js 18+ and PNPM 8+
+- Python 3.11+ and Poetry
+- Docker and Docker Compose
+- Git
 
-### Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd congressionalappchallenge
-   ```
-
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
-
-3. **Set up environment variables**
-   Create a `.env` file in the root directory:
-   ```env
-   # Firebase Configuration
-   FIREBASE_PROJECT_ID=your-project-id
-   FIREBASE_PRIVATE_KEY=your-private-key
-   FIREBASE_CLIENT_EMAIL=your-client-email
-   
-   # API Keys (if needed)
-   ARCGIS_API_KEY=your-arcgis-api-key
-   ARCGIS_SHELTERS_URL=https://your-arcgis-endpoint/query
-   
-   # Server Configuration
-   PORT=3000
-   NODE_ENV=development
-   ```
-
-4. **Start the server**
-   ```bash
-   cd server
-   node server.js
-   ```
-
-5. **Access the application**
-   - Public interface: `http://localhost:3000/public.html`
-   - Admin panel: `http://localhost:3000/admin.html`
-
-## 📋 Features
-
-### Public Interface (`public.html`)
-- **Search & Filter**: Find shelters by location, type, and availability
-- **Real-time Data**: Live shelter capacity and status updates
-- **Responsive Design**: Works on desktop and mobile devices
-- **Accessibility**: Designed for users with diverse needs
-
-### Admin Panel (`admin.html`)
-- **Dashboard**: Overview of shelter statistics and capacity
-- **Shelter Management**: Add, edit, and remove shelter information
-- **Real-time Updates**: Monitor shelter status and availability
-- **Data Export**: Generate reports and analytics
-
-### Backend API (`server/server.js`)
-- **RESTful Endpoints**: GET/POST operations for shelter data
-- **Firebase Integration**: Secure data storage with Firestore
-- **CORS Support**: Cross-origin resource sharing enabled
-- **Error Handling**: Comprehensive error management
-
-## 🔧 Configuration
-
-### Firebase Setup
-
-1. Create a Firebase project at [Firebase Console](https://console.firebase.google.com/)
-2. Enable Firestore Database
-3. Generate a service account key:
-   - Go to Project Settings > Service Accounts
-   - Click "Generate new private key"
-   - Download the JSON file
-4. Update your `.env` file with the credentials
-
-### Firestore Security Rules
-
-The `firestore.rules` file provides:
-- Public read access to shelter data
-- Restricted write access (admin-only)
-- Secure data protection
-
-Deploy rules to Firebase:
-```bash
-firebase deploy --only firestore:rules
-```
-
-## 📊 Data Import (ETL)
-
-### ArcGIS Integration
-
-The ETL script (`scripts/etl_winter.mjs`) can import shelter data from ArcGIS:
+### One-Command Setup
 
 ```bash
-# Run ETL script
-node scripts/etl_winter.mjs
-
-# Clear existing data and import
-node scripts/etl_winter.mjs --clear
+# Clone and setup everything
+git clone <repository-url>
+cd shelterlink
+make setup
 ```
 
-### Manual Data Entry
+This will:
+1. Install all dependencies
+2. Start Postgres with PostGIS
+3. Run database migrations
+4. Seed with sample LA data
+5. Start all development servers
 
-Shelters can be added manually through the admin panel or by updating the `data/winter_shelters.json` file.
+### Manual Setup
 
-## 🛠️ Development
+```bash
+# 1. Install dependencies
+pnpm install
 
-### Adding New Features
+# 2. Start database
+pnpm db:up
 
-1. **Frontend**: Modify files in the `web/` directory
-2. **Backend**: Update `server/server.js` for new API endpoints
-3. **Data**: Use the ETL script or admin panel for data management
+# 3. Run migrations and seed data
+pnpm db:migrate
+pnpm db:seed
+
+# 4. Start all apps
+pnpm dev
+```
+
+## 📱 Apps
+
+### Mobile App (`apps/mobile`)
+- **React Native + Expo** with TypeScript
+- **Offline-first** with React Query + AsyncStorage
+- **Multilingual** (EN/ES/KO/HY/TL/ZH)
+- **Accessibility** features (large targets, screen reader, TTS)
+- **Location-aware** with distance sorting
+- **Push notifications** for bed availability
+
+**Start:** `pnpm --filter @shelterlink/mobile start`
+
+### Staff Portal (`apps/staff`)
+- **Next.js 14** with App Router
+- **Magic link authentication**
+- **Real-time shelter management**
+- **Audit logging** for all changes
+- **Multilingual staff interface**
+
+**Start:** `pnpm --filter @shelterlink/staff dev`
+
+### API (`apps/api`)
+- **FastAPI** with async SQLAlchemy
+- **Postgres + PostGIS** for spatial queries
+- **JWT authentication** for staff
+- **Rate limiting** and CORS
+- **Comprehensive testing**
+
+**Start:** `pnpm --filter @shelterlink/api dev`
+
+## 🗄️ Database
+
+### Schema Overview
+
+```sql
+-- Core tables
+shelters(id, name, address, lat, lon, neighborhood, ...)
+shelter_status(id, shelter_id, category, beds_total, beds_available, status, ...)
+resources(id, name, type, address, lat, lon, neighborhood, ...)
+staff(id, email, shelter_id, role, locale)
+status_changes(id, shelter_id, category, prev_available, new_available, ...)
+translation_strings(id, key, lang, value)
+
+-- PostGIS spatial indexes for fast proximity searches
+```
+
+### Key Features
+
+- **Conservatism Rule**: Status auto-downgrades to `UNKNOWN` after 12 hours
+- **Spatial Queries**: Fast distance-based searches using PostGIS
+- **Audit Trail**: All status changes logged with staff attribution
+- **Multilingual**: Dynamic content via `translation_strings` table
+
+## 🌍 LA-Specific Features
+
+### Neighborhoods Covered
+- Skid Row (DTLA)
+- Westlake/MacArthur Park
+- Koreatown
+- Hollywood
+- Venice
+- South LA
+- San Fernando Valley
+- San Pedro/Harbor
+
+### Resource Types
+- **Shelters** (Men/Women/Family/Youth/Mixed)
+- **Cooling & Warming Centers**
+- **Safe Parking** locations
+- **Food pantries & hot meals**
+- **Mobile showers & hygiene**
+- **Community clinics & urgent care**
+- **Legal aid / benefits enrollment**
+
+### Emergency Contacts
+- **211 LA** integration
+- **Crisis hotlines**
+- **Shelter front desks**
+
+## 🔧 Development
+
+### Commands
+
+```bash
+# Development
+pnpm dev              # Start all apps
+pnpm build           # Build all apps
+pnpm test            # Run all tests
+pnpm lint            # Lint all code
+pnpm format          # Format all code
+
+# Database
+pnpm db:up           # Start database
+pnpm db:down         # Stop database
+pnpm db:migrate      # Run migrations
+pnpm db:seed         # Seed data
+pnpm db:reset        # Reset database
+
+# Individual apps
+pnpm --filter @shelterlink/api dev
+pnpm --filter @shelterlink/staff dev
+pnpm --filter @shelterlink/mobile start
+```
+
+### Environment Variables
+
+Copy the example files and configure:
+
+```bash
+# API
+cp apps/api/env.example apps/api/.env
+
+# Staff Portal
+cp apps/staff/env.example apps/staff/.env
+
+# Mobile App
+cp apps/mobile/env.example apps/mobile/.env
+```
 
 ### Testing
 
-- **Local Testing**: Use the sample data in `data/winter_shelters.json`
-- **API Testing**: Test endpoints using tools like Postman or curl
-- **Frontend Testing**: Open browser developer tools for debugging
+```bash
+# Backend tests
+cd apps/api && poetry run pytest
 
-### Deployment
+# Frontend tests (when implemented)
+pnpm --filter @shelterlink/staff test
+pnpm --filter @shelterlink/mobile test
+```
 
-1. **Firebase Hosting** (Recommended):
-   ```bash
-   npm install -g firebase-tools
-   firebase login
-   firebase init hosting
-   firebase deploy
-   ```
+## 🎯 Demo Script (90 seconds)
 
-2. **Other Platforms**: The application can be deployed to any Node.js hosting platform
+1. **Problem**: "LA has thousands of people needing shelter and resources"
+2. **Open Mobile App**: Show home screen with location permission
+3. **Filter**: Tap "Women" + "Pet Friendly" chips
+4. **Results**: Show distance-sorted shelters with status pills
+5. **Detail**: Tap shelter → show requirements, languages, "Call" button
+6. **Directions**: Tap "Go" → opens Google/Apple Maps
+7. **Staff Update**: Open staff portal → update bed count
+8. **Real-time**: Refresh mobile → shows updated availability
+9. **Privacy**: "No login required, location stays on device"
+10. **Multilingual**: Switch to Spanish → entire UI changes
+11. **Offline**: Turn off internet → cached data still works
+12. **Weather**: Show heat advisory banner → links to cooling centers
 
-## 🔒 Security Considerations
+## 🔒 Privacy & Security
 
-- **Environment Variables**: Never commit `.env` files to version control
-- **Firebase Rules**: Regularly review and update Firestore security rules
-- **API Keys**: Rotate API keys regularly and use least-privilege access
-- **HTTPS**: Always use HTTPS in production
+### Privacy-First Design
+- **No end-user accounts** - completely anonymous
+- **Location stays on device** - never sent to server
+- **No PII collection** - no tracking or analytics
+- **Offline-first** - works without internet
 
-## 📱 Mobile Support
+### Staff Security
+- **Magic link authentication** - no passwords
+- **JWT tokens** with short expiration
+- **Rate limiting** on all endpoints
+- **Audit logging** for all changes
+- **Role-based access** (ADMIN/STAFF)
 
-The application is fully responsive and works on:
-- iOS Safari
-- Android Chrome
-- Mobile browsers
+## 🌐 Internationalization
+
+### Supported Languages
+- **English** (en) - Primary
+- **Spanish** (es) - Español
+- **Korean** (ko) - 한국어
+- **Armenian** (hy) - Հայերեն
+- **Tagalog** (tl) - Tagalog
+- **Mandarin** (zh) - 中文
+
+### Implementation
+- **Static content**: Bundled in app
+- **Dynamic content**: Database-driven via `translation_strings`
+- **Auto-detection**: Device locale detection
+- **Manual toggle**: Settings screen language picker
+
+## 📊 Data Management
+
+### Seed Data
+- **5 shelters** across LA neighborhoods
+- **5 resources** (food, showers, health, cooling, safe parking)
+- **2 staff accounts** (admin + shelter staff)
+- **24 translation strings** in 3 languages
+
+### Real Data Integration
+- **ETL scripts** for importing from LA County data
+- **ArcGIS integration** for shelter data
+- **211 LA API** for resource updates
+- **Weather API** for extreme weather alerts
+
+## 🚀 Deployment
+
+### Production Setup
+
+```bash
+# 1. Environment
+cp apps/api/env.example apps/api/.env
+# Configure DATABASE_URL, JWT_SECRET, EMAIL_PROVIDER, etc.
+
+# 2. Database
+docker compose -f docker-compose.prod.yml up -d
+
+# 3. Migrations
+cd apps/api && poetry run alembic upgrade head
+
+# 4. Build & Deploy
+pnpm build
+# Deploy to your platform (Vercel, Railway, etc.)
+```
+
+### Docker Production
+
+```bash
+# Build images
+docker build -f apps/api/Dockerfile -t shelterlink-api .
+docker build -f apps/staff/Dockerfile -t shelterlink-staff .
+
+# Run with docker-compose.prod.yml
+docker compose -f docker-compose.prod.yml up -d
+```
 
 ## 🤝 Contributing
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
+1. **Fork** the repository
+2. **Create** a feature branch
+3. **Make** your changes
+4. **Test** thoroughly
+5. **Submit** a pull request
+
+### Development Guidelines
+- **TypeScript** for all JavaScript/TypeScript code
+- **Black** for Python formatting
+- **ESLint** for JavaScript linting
+- **Pre-commit hooks** for code quality
+- **Comprehensive tests** for all features
 
 ## 📄 License
 
-This project is created for the Congressional App Challenge.
+This project is created for the **Congressional App Challenge**.
 
 ## 🆘 Support
 
-For support or questions:
-- Check the documentation
-- Review the code comments
-- Contact the development team
-
-## 🔄 Updates
-
-- **v1.0.0**: Initial release with basic shelter finder functionality
-- **v1.1.0**: Added admin panel and ETL capabilities
-- **v1.2.0**: Enhanced security and mobile responsiveness
+- **Documentation**: Check this README and code comments
+- **Issues**: Create GitHub issues for bugs/features
+- **Community**: Join our development discussions
 
 ---
 
-**Built with ❤️ for the Congressional App Challenge**
+**Built with ❤️ for LA County - Helping people find shelter and resources when they need it most.**

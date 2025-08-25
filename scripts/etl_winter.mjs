@@ -14,18 +14,76 @@ import path from 'path';
 // Load environment variables
 dotenv.config();
 
-// Initialize Firebase Admin
-const serviceAccount = {
-  projectId: process.env.FIREBASE_PROJECT_ID,
-  privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-  clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-};
+// Initialize Firebase Admin (robust: supports GOOGLE_APPLICATION_CREDENTIALS, FIREBASE_SERVICE_ACCOUNT, or individual env vars)
 
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-});
+function parseInlineServiceAccount(jsonStr){
+  try {
+    const obj = JSON.parse(jsonStr);
+    return obj;
+  } catch (e) {
+    throw new Error(`FIREBASE_SERVICE_ACCOUNT is set but not valid JSON: ${e.message}`);
+  }
+}
 
-const db = admin.firestore();
+async function loadServiceAccountFromFile(filePath){
+  const raw = await fs.readFile(filePath, 'utf8');
+  return JSON.parse(raw);
+}
+
+async function initFirebase(){
+  let svc = null;
+
+  // Option A: Full JSON in FIREBASE_SERVICE_ACCOUNT
+  if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+    svc = parseInlineServiceAccount(process.env.FIREBASE_SERVICE_ACCOUNT);
+  }
+
+  // Option B: GOOGLE_APPLICATION_CREDENTIALS points to a JSON file
+  if (!svc && process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+    svc = await loadServiceAccountFromFile(process.env.GOOGLE_APPLICATION_CREDENTIALS);
+  }
+
+  // Option C: Individual env vars (FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY)
+  if (!svc && process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY) {
+    svc = {
+      type: 'service_account',
+      project_id: process.env.FIREBASE_PROJECT_ID,
+      client_email: process.env.FIREBASE_CLIENT_EMAIL,
+      private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+    };
+  }
+
+  // Initialize
+  if (svc) {
+    if (!admin.apps.length) {
+      admin.initializeApp({
+        credential: admin.credential.cert(svc),
+        projectId: svc.project_id || process.env.FIREBASE_PROJECT_ID,
+      });
+    }
+  } else {
+    // Fall back to ADC if available (gcloud auth application-default login)
+    if (!admin.apps.length) {
+      admin.initializeApp({
+        credential: admin.credential.applicationDefault(),
+      });
+    }
+  }
+
+  // Sanity check
+  try {
+    return admin.firestore();
+  } catch (e) {
+    console.error('\n🔥 Firebase credential error:', e.message);
+    console.error('Fix by either:');
+    console.error('  1) Set GOOGLE_APPLICATION_CREDENTIALS to a *service account key* JSON file, or');
+    console.error('  2) Set FIREBASE_SERVICE_ACCOUNT to the full JSON, or');
+    console.error('  3) Set FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY env vars.');
+    throw e;
+  }
+}
+
+const db = await initFirebase();
 
 /**
  * Fetch data from ArcGIS REST API
@@ -64,22 +122,32 @@ function transformFeature(feature) {
   const attributes = feature.attributes || {};
   const geometry = feature.geometry || {};
   
+  const capacity = Number.parseInt(attributes.CAPACITY) || 0;
+  const available = Number.parseInt(attributes.AVAILABLE) || 0;
+  const occupied = Math.max(capacity - available, 0);
+
   return {
     name: attributes.NAME || attributes.SHELTER_NAME || 'Unknown Shelter',
     address: attributes.ADDRESS || attributes.LOCATION || 'Address not available',
     phone: attributes.PHONE || attributes.CONTACT || null,
-    capacity: parseInt(attributes.CAPACITY) || 0,
-    available: parseInt(attributes.AVAILABLE) || 0,
-    type: attributes.TYPE || attributes.SHELTER_TYPE || 'general',
-    status: attributes.STATUS || 'open',
-    coordinates: geometry.x && geometry.y ? {
-      latitude: geometry.y,
-      longitude: geometry.x
-    } : null,
-    hours: attributes.HOURS || null,
-    restrictions: attributes.RESTRICTIONS || null,
-    services: attributes.SERVICES ? attributes.SERVICES.split(',').map(s => s.trim()) : [],
-    lastUpdated: new Date().toISOString(),
+    type: attributes.TYPE || attributes.SHELTER_TYPE || 'shelter',
+    status: attributes.STATUS || 'unknown',
+    location: (geometry.x && geometry.y) ? { lat: geometry.y, lng: geometry.x } : null,
+    hours_text: attributes.HOURS || null,
+    notes: attributes.RESTRICTIONS || attributes.NOTES || null,
+    populations: ['all'],
+    ada: /ada|accessible|wheelchair/i.test(attributes.NOTES || attributes.HOURS || '') || false,
+    pets_ok: /pet|animal/i.test(attributes.NOTES || '') || false,
+
+    // Primary fields your UI expects
+    totalBeds: capacity,
+    occupiedBeds: occupied,
+
+    // Keep raw numbers for reference/debug
+    _raw_capacity: capacity,
+    _raw_available: available,
+
+    last_verified_at: new Date().toISOString(),
     source: 'arcgis_import'
   };
 }
@@ -90,7 +158,7 @@ function transformFeature(feature) {
  */
 async function saveToFirestore(shelters) {
   const batch = db.batch();
-  const sheltersRef = db.collection('shelters');
+  const sheltersRef = db.collection(process.env.FIRESTORE_COLLECTION || 'places');
   
   console.log(`Preparing to save ${shelters.length} shelters to Firestore...`);
   
@@ -119,7 +187,7 @@ async function saveToFirestore(shelters) {
  */
 async function saveToLocalFile(shelters, filename = 'winter_shelters.json') {
   try {
-    const dataDir = path.join(process.cwd(), '..', 'data');
+    const dataDir = path.join(process.cwd(), 'data');
     const filePath = path.join(dataDir, filename);
     
     // Ensure data directory exists
@@ -141,7 +209,7 @@ async function clearExistingData() {
   try {
     console.log('Clearing existing shelter data...');
     
-    const snapshot = await db.collection('shelters').get();
+    const snapshot = await db.collection(process.env.FIRESTORE_COLLECTION || 'places').get();
     const batch = db.batch();
     
     snapshot.docs.forEach(doc => {
@@ -178,7 +246,7 @@ async function loadFromLocalFile(filePath) {
  * Main ETL function
  */
 async function runETL() {
-  const arcgisUrl = process.env.ARCGIS_SHELTERS_URL;
+  const arcgisUrl = process.env.ARCGIS_SHELTERS_URL || process.env.WINTER_LAYER_URL;
   const useLocalFile = process.argv.includes('--local') || !arcgisUrl || arcgisUrl.includes('example.com');
   
   try {

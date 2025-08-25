@@ -1,0 +1,22 @@
+{
+  "extends": "../../packages/config/typescript-preset.json",
+  "compilerOptions": {
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": ["./src/*"],
+      "@shelterlink/ui": ["../../packages/ui/src"],
+      "@shelterlink/config": ["../../packages/config"]
+    }
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": ["node_modules"]
+}
